@@ -1,0 +1,38 @@
+[Locale]
+	CodePage = 3
+
+[header]
+	Version = 8
+
+[rsw]
+	UUID = 9E17EFA7-17A3-4FF9-8AD6-957AF2A01E36
+	ItemName = "ITCM RC Driver Update"
+	ItemVersion = 1.0
+	ItemType = 0
+	SourceMedium = 1
+	ProductName = "ITCM RC Driver Update"
+	ProductVersion = 1.0
+	FiledBy = 0
+	Supplier = 
+	Comment = 
+	CreationDate = 2018-02-16
+	CreationTime = 11:38:42
+	ChangeDate = 2018-02-16
+	ChangeTime = 12:59:36
+	ReportEvents = 0
+	ActivationProc = 1
+	RecNotification = 0
+	HDSourcePath = 
+	PackageType = 0
+	Volumes = 1
+	SoftwareDelivery = 0
+	PackageStatus = 0
+	Flags = 0
+
+[vol1]
+	Medium = 1
+	SourcePath = 1.vol
+	Number = 1
+	Comment = v1
+	Name = 1.vol
+

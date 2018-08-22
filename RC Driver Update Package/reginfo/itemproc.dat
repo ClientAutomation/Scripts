@@ -1,0 +1,34 @@
+[Locale]
+	CodePage = 3
+
+[Header]
+	Version = 8
+	NumberOfProcs = 1
+
+[ItemProc0]
+	ItemName = MirrorInst
+	ItemVersion = 1.0
+	OSType = 3
+	Comment = 
+	CreationDate = 2018-02-16
+	CreationTime = 11:45:34
+	Type = 1
+	Task = 0
+	Parameters = ">$rf $#bg"
+	SubPath = \
+	ProcToRun = MirrorInst.cmd
+	FiledBy = 0
+	ExtendedOSType = 30000
+	UserSelect = 0
+	External = 0
+	Volume = 0
+	Prerequisites = 0
+	StartFlag = 0
+	OperationMask = 4096
+	Mask = 0
+	BootBeforeMask = 0
+	BootAfterMask = 0
+	MgmtTypeMask = 1
+	Relation = 1
+	NumberOfProcDependencies = 0
+
