@@ -1,10 +1,30 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
+
+REM --------------------------------------------
+REM CA IT Client Manager (ITCM) Agent Install Script
+REM
+REM Original Author: 
+REM Brian Fontana, Principal Engineer, CA Support
+REM
+REM Last Updated:
+REM 22-Aug 2018 -- Brian Fontana
+REM
+REM Purpose:
+REM This script will check if the ITCM agent is already installed,
+REM and if not, will launch Deploywrapper.exe to install the ITCM agent,
+REM per the referenced source files.
+REM
+REM Note:
+REM The ITCM agent sources files should be provided from the DMDeploy
+REM package library (..\CA\DSM\Packages\Public\CAUnicenterDSM\AgentX).
+REM Refer to the ":Settings" section below.
+REM --------------------------------------------
+
 echo.
 echo *********************************************
 echo **        ITCM Agent Install Script        **
 echo *********************************************
-
 
 :Usage
 echo.
@@ -18,7 +38,6 @@ if "%1"=="?" exit /b 0
 if "%1"=="-?" exit /b 0
 if "%1"=="/?" exit /b 0
 
-
 :Settings
 REM This is the default scalability server the ITCM agent will register with.
 REM Note: This value is overridden by %1, if passed to the script.
@@ -26,7 +45,6 @@ set DEFAULT_SCALABILITY_SERVER=fonbr01-u177231.ca.com
 
 REM This is the sub-folder, relative to this script, that contains the itcm agent installation files.
 set ITCM_SOURCE_FILES=Windows_x86
-
 
 :Validations
 echo.
@@ -42,7 +60,6 @@ if not exist "%cd%\%ITCM_SOURCE_FILES%" (
   goto ValidationsFail)
 goto CheckParameters
 
-
 :ValidationsFail
 echo.
 echo ********************************************
@@ -52,7 +69,6 @@ echo Please review each setting at the top of the script.
 echo ********************************************
 endlocal
 exit /b 1
-
 
 :CheckParameters
 echo.
@@ -64,7 +80,6 @@ if "%1"=="" (
   echo Using scalability server: %1
   set DEFAULT_SCALABILITY_SERVER=%1)
 goto IsITCMInstalled
-
 
 :IsITCMInstalled
 echo.
@@ -98,7 +113,6 @@ echo ITCM Install Dir: %itrm_dir%
 echo ITCM Version: %itrm_version%
 echo Architecture: %arch%-bit
 goto Success
-
 
 :InstallITCM
 echo.
@@ -137,7 +151,6 @@ echo Version:      %itrm_version%
 echo Architecture: %arch%-bit
 goto Success
 
-  
 :InstallITCMFail
 echo.
 echo ********************************************
@@ -147,7 +160,6 @@ echo Log files are located in %temp%
 echo ********************************************
 endlocal
 exit /b %itcm_install_rc%
-  
 
 :Success
 echo.
