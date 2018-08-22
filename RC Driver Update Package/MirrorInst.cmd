@@ -1,3 +1,6 @@
+@echo off
+setlocal enableextensions enabledelayedexpansion
+
 REM --------------------------------------------
 REM Remote Control Mirror Driver Update Script
 REM
@@ -15,9 +18,6 @@ REM
 REM Note:
 REM The udpated driver drops support for "Secure Control" connection mode.
 REM --------------------------------------------
-
-@echo off
-setlocal enableextensions enabledelayedexpansion
 
 echo.
 echo *********************************************

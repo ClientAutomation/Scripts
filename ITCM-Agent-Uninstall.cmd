@@ -1,5 +1,19 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
+
+REM --------------------------------------------
+REM CA IT Client Manager (ITCM) Uninstall Script
+REM
+REM Original Author: 
+REM Brian Fontana, Principal Engineer, CA Support
+REM
+REM Last Updated:
+REM 22-Aug 2018 -- Brian Fontana
+REM
+REM Purpose:
+REM A uninstall script for the ITCM agent on Windows.
+REM --------------------------------------------
+
 echo.
 echo *******************************************************
 echo **     Client Auto (ITCM) Agent Uninstall Script     **
