@@ -8,7 +8,7 @@ REM Original Author:
 REM Brian Fontana, Principal Engineer, CA Support
 REM
 REM Last Updated:
-REM 22-Aug 2018 -- Brian Fontana
+REM 27-Sep 2018 -- Brian Fontana
 REM
 REM Purpose:
 REM This script will check if the RC feature is installed on the system,
@@ -75,6 +75,32 @@ echo ITCM Install Dir: %itrm_dir%
 echo ITCM Version: %itrm_version%
 echo RC Installed: %rc_installed%
 echo Architecture: %arch%-bit
+
+REM Check driver modified date.
+if %arch%==32 (
+  set current_file="%itrm_dir%DSM\bin\x86\RCMirrorInstall.exe"
+  set patch_file="%~dp0RCMirrorInstall_x86.exe"
+  for %%i in (!current_file!) do set current_date=%%~ti
+  for %%i in (!patch_file!) do set patch_date=%%~ti
+) else (
+  set current_file="%itrm_dir%DSM\bin\AMD64\RCMirrorInstall.exe"
+  set patch_file="%~dp0RCMirrorInstall.exe"
+  for %%i in (!current_file!) do set current_date=%%~ti
+  for %%i in (!patch_file!) do set patch_date=%%~ti
+)
+
+REM Output dates.
+echo Driver date: %current_date%
+echo Patch date: %patch_date%
+
+REM Compare modified dates
+if "%current_date%"=="%patch_date%" (
+  echo.
+  echo Driver is already up to date, exiting...
+  exit /b 0
+) else (
+  echo.
+  echo Driver requires an update, installing...)
 
 REM Copy new driver and install it.
 if %arch%==32 (
