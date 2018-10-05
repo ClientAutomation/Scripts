@@ -1,0 +1,3 @@
+set nocount on;
+
+select dname from [mdb].[dbo].[csm_object] where class=2000

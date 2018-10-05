@@ -1,0 +1,349 @@
+'This is a field developed utility to export the existing LocationAware Locations from a specified configuration policy
+'The script is installed in  the Client auto install location usually c:\program files (x86)\ca\dsm\CA_FDU\LocationAware  
+'The syntax to exectute the script is, from a command prompt 
+'	dmscript "C:\program files (x86)\ca\dsm\CA_FDU\LocationAware\GetLocationAwaretable.dms" <PolicyName>
+'The policy name is optional  If you do not enter it you will be prompted for it later
+
+'Before running the script you M U S T edit the sql server credentials below the row of ***
+'
+'All logs are in the same directory as the script mentioned above.  The log for the script is the scriptname.log
+
+'The output of the script is in the same directory named Locations.csv
+
+'After running this script you can edit Locations.csv with a text editor or an application such as MS Excel
+'Save the edited file to the same location and name
+'Save it as a CSV file
+'B E   S U R E to include the header row unedited in your output file
+
+'In Addition to this script make dure the follwing files are also in the script location.  They are needed for the script to run
+			'GetPolName.sql
+			'GetLocations.sql
+Dim dim workingdir1, PolName[1000], SQLHost, SQLUser, SQLPassword, PolicyName, OneLine, onelinetemp[6], LocParm[1000], LocName[1000], Priority[1000], IPRange[1000], SSName[1000], SubNet[1000], ScriptName[1000] WorkingDir as string
+Dim Fin,Fout,Count, Log, log1, j, k, present, found, failed, rc as integer
+
+
+'********************************set these to access the mdb***********************************************************
+
+SQLHost="localHost"  'or hostname\instancename
+SQLUser="ca_itrm" 'or sa
+SQLPassword="NOT_changedR11"
+
+'***********************************************************************************************************************
+
+
+
+Function GetPolicyNames() as integer
+dim fin1, fout1 as integer
+rc=0
+count=0
+
+workingdir1="""" + workingdir
+oneline="sqlcmd -S " + sqlHost + " -U  " + SQLUser + " -P " + SQLPassword + " -i " + workingdir1 + "Getpolname.sql"" -o " + Workingdir1 + "PolName.out""  -h -1 -I -W -d MDB"
+Writefile(log,"preparing to get the list of avalible policies with the following command")
+Writefile(log,oneline)
+rc=exec(oneline,true)
+if rc<> 0 then 
+	messagebox("Unable to get list of policies from MSSQL")
+	writefile(log, "Unable to get list of policies from MSSQL")
+	GetPolicyNames=1
+	exit function
+end if
+Writefile(log,"Preparing to open the SQL output file " + Workingdir + "PolName.out")
+fin1=OpenFile(Workingdir + "PolName.out",O_READ)
+if fin1<0 then
+	messagebox("unable to open output file " + workingdir + "polname.out")
+	writefile(log,"unable to open output file " + workingdir + "polname.out")
+	Getpolicynames=1
+	exit function
+end if
+Writefile(log,"The following configuration policies are listed in the MDB")
+While Not(Eof(fin1))
+	readfile(fin1,oneline)
+	
+	if oneline="" then 
+		oneline="Default"
+	end if
+	found=0
+	if count >0 then
+		for j=0 to count-1
+			if oneline=polname[j] then
+				found=1
+				exit for
+			end if
+		next j
+		if found=0 then 
+			polname[count]=oneline
+			writefile(log,oneline)
+			count=count+1		
+		End if
+	else
+		polname[count]=oneline
+		WriteFile(log,oneline)
+		count=count+1
+	end if
+wend
+closefile(fin1)
+count=count-1
+clearscreen()
+Writefile(log,"Preparing to write the avalible policy names to the file " + Workingdir + "PolName.txt")
+fout1=OpenFile(Workingdir + "PolName.txt",O_WRITE)
+if fout1<0 then
+	messagebox("unable to open output file " + workingdir + "polname.txt")
+	writefile(log,"unable to open output file " + workingdir + "polname.txt")
+	getpolicynames=1
+	exit function
+end if
+for j=0 to count
+	print polname[j]
+	writefile(fout1,polname[j])
+next j
+writefile(log,"closing file " + workingdir + "polname.txt")
+closefile(fout1)
+If policyname="" then
+	PolicyName="Default"
+	Writefile(log,"asking user to choose policy name of the policy to be exported")	
+	InputBox("Enter the name of the policy you want to export. The avalible names are in the file " + Workingdir + "PolName.txt","Policy Selection",PolicyName)
+End if
+:redo	
+clearscreen()
+Writefile(log,"user chose " + policyname)
+if PolicyName="" then 
+	InputBox("Enter the name of the policy you want to export. The avalible names are in the file " + Workingdir + "PolName.txt","MUST ENTER A POLICY NAME",PolicyName)
+	writefile(log,"User did not enter a value")
+	Goto Redo
+End if
+
+found=0
+for j=0 to count
+	if policyname=PolName[j] then 
+		found=1
+		exit for
+	End if
+Next j
+If found=0 then
+	Messagebox("You entered " + policyname + ".  This is an invalid policy name Please reenter")
+	Writefile(log,"User entered an invalid policy name")
+	policyname=""
+	goto redo
+End if
+GetPolicyNames=0
+End function
+
+
+
+
+
+Function ReadPolicy() as integer
+rc=0
+if policyName="Default" then
+	policyName=""
+	oneline="sqlcmd -S " + SQLHost + " -U " + SQLUser + " -P " + SQLPassword + " -i " + workingdir1 + "Getlocations.sql"" -o " + Workingdir1 + "locations.out""  -s "","" -h -1 -I -W -d MDB -v PolicyName="""""
+else
+
+	oneline="sqlcmd -S " + SQLHost + " -U " + SQLUser + " -P " + SQLPassword + " -i " + workingdir1 + "Getlocations.sql"" -o " + Workingdir1 + "locations.out""  -s "","" -h -1 -I -W -d MDB -v PolicyName=""" + policyname + """
+end if
+Writefile(log,"Preparing to get the location aware location data from sql with the following command")
+writefile(log,oneline)
+ rc=exec(oneline,true)
+if rc<> 0 then 
+	messagebox("Unable to get list of locations from MSSQL")
+	Writefile(log,"MSSQL returned an error run the command above at a command prompt for more detail")
+	readpolicy=1
+	exit function
+end if
+readpolicy=0
+End function
+
+Function PopulateArray() as integer
+dim tempstring[6], olshort as string
+dim tempcount, fin2, done as integer
+tempcount=0
+done=0
+count=0
+
+Writefile(log,"Prepring to read the file " + workingdir + "locations.out")
+fin2=openfile(workingdir + "locations.out",O_read)
+if fin2<0 then
+	messagebox("unable to open the file " + workingdir + "locations.out")
+	populatearray=1
+	exit function
+end if
+
+While not(EOF(Fin2))
+	tempcount=0
+	for j= 0 to 5
+		oneline=""
+		olshort=""
+		
+		readfile(fin2,oneline)
+		if left(oneline,1)<>"l" then 
+			exit while
+		End if
+		olshort=mid(oneline,4,instr(oneline,",")-4)
+
+		if j=0 and instr(oneline,",address range,")>0 then
+			tempcount=val(olshort)-1
+			iprange[tempcount]= mid(oneline,instr(oneline,",address range,")+15)
+			
+		elseif j=1 and instr(oneline,",location name,") >0 and tempcount+1=val(olshort) then
+			locname[tempcount]= mid(oneline,instr(oneline,",location name,")+15)
+	
+		elseif j=2 and instr(oneline,",priority,") >0 and tempcount+1=val(olshort) then
+			priority[tempcount]= mid(oneline,instr(oneline,",priority,")+10)
+	
+		elseif j=3 and instr(oneline,",scalability server,") >0 and tempcount+1=val(olshort) then
+			ssname[tempcount]= mid(oneline,instr(oneline,",scalability server,")+20)	
+
+		elseif j=4 and instr(oneline,",script,") >0 and tempcount+1=val(olshort) then
+			scriptname[tempcount]= mid(oneline,instr(oneline,",script,")+8)
+		
+		elseif j=5 and instr(oneline,",subnet scan,") >0 and tempcount+1=val(olshort) then
+			subnet[tempcount]= mid(oneline,instr(oneline,",subnet scan,")+13)
+
+		else
+			writefile(log1,"there seems to be a data error in the sql output file " +  workingdir + "locations.out")
+			writefile(log1,"The file should have 5 lines per loc<number>.  The mismatch seems to be in LOC" +str(tempcount))
+			messagebox("There is a mismatch in the expected data format returned from MSSQL see the log file for more detail")
+			populatearray=1
+			closefile(fin2)
+			exit function
+		end if
+	
+	next J
+
+	writefile(log,"populated array " + str(tempcount) + " with ")
+
+		writefile(log, "     scriptname= " + scriptname[tempcount])
+		writefile(log, "     subnet scan= " + subnet[tempcount])
+		writefile(log, "     scalability server= " + SSname[tempcount])
+		writefile(log, "     priority= " + priority[tempcount])
+		writefile(log, "     location name= " + locname[tempcount])
+		writefile(log, "     address range= " + iprange[tempcount]) 
+		Writefile(log,"")	
+		count=count+1
+ 
+wend
+closefile(fin2)
+Writefile(log,"total number of locations read is " + str(count))
+populatearray=0
+
+end function
+
+
+
+
+
+
+
+Function FileDelete(Filename as string) as integer
+
+If ExistFile(filename) then
+	DeleteFile(filename)
+	If ExistFile(filename) then
+		WriteFile(Log,"Unable to delete file " + Filename + " Aborting Application")
+		Messagebox("Unable to delete file " + Filename + " Aborting Application")
+		filedelete=1
+		exit function
+		
+	End IF
+	WriteFile(Log,"Deleted file " + filename)
+	filedelete=0
+End IF
+
+end function
+'main
+if argv(1) <>"" then
+	policyname=argv(1)
+end if
+WorkingDir=""
+WorkingDir=EnvGetString("SDROOT") + "\..\"
+If WorkingDir="" then
+	Messagebox("Unable to find the enviornmentment variable SDROOT, aborting application")
+	Exit
+End If
+
+If Not(ExistDir(workingdir + "CA_FDU")) THEN
+	CreateDirectory(workingdir+"CA_FDU")
+	If Not(ExistDir(workingdir + "CA_FDU")) THEN
+		Messagebox("Unable to create directory " + workingdir + "CA_FDU" + "Aborting Application")
+		Exit
+	End If
+		
+End IF
+WorkingDir= WorkingDir + "CA_FDU\"
+If Not(ExistDir(workingdir + "LocationAware")) THEN
+	CreateDirectory(workingdir+"LocationAware")
+	If Not(ExistDir(workingdir + "LocationAware")) THEN
+		messagebox("Unable to create directory " + workingdir + "LocationAware" + "Aborting Application")
+		Exit
+	End If
+		
+End IF
+WorkingDir= WorkingDir + "LocationAware\"
+log=OpenFile(WorkingDir + "GetLocationAwareTable.log",O_Write)
+If Log <0 Then
+	Messagebox("Unable to open the log file for writing " + WorkingDir + "GetLocationAwareTable.log , aborting application")
+	Exit
+End If
+WriteFile(Log,"Logging Started")
+WriteFile(Log,"Deleting Existing working files if they exist")
+rc=filedelete(Workingdir + "PolName.out")
+if rc=1 then 
+	goto finalize
+End if
+rc=filedelete(Workingdir + "PolName.txt")
+if rc=1 then 
+	goto finalize
+End if 
+rc=filedelete(Workingdir + "locations.out")
+if rc=1 then 
+	goto finalize
+End if
+rc=GetpolicyNames()
+if rc=1 then 
+	goto finalize
+end if
+rc=ReadPolicy()
+if rc=1 then 
+	goto finalize
+end if
+rc=populatearray()
+if rc=1 then
+goto finalize
+end if
+ 
+WriteFile(log,"preparing to create the " + workingdir + "Locations.csv file")
+Fout=Openfile(workingdir + "Locations.csv",O_write)
+If fout<0 then
+	Writefile(log,"Was unable to open the create the output file, Cannot continue")
+	Messagebox("Was unable to open the create the output file, Cannot continue")
+	goto Prefinalize
+End If
+oneline="Location Name,Priority,Address Range,Scalability Server,Subnet Scan,Script"
+WriteFile(fout,oneline)
+if count>0 then
+	for j=0 to count-1
+		oneline=LocName[j] + "," + Priority[j] + "," + IPRange[j] + "," + SSName[j] + "," + SubNet[j] + "," + ScriptName[j]
+		Writefile(fout,oneline) 
+	Next
+	writeFile(log,"Sucsesfully created the csv file")
+	CloseFile(fout)
+	closefile(log)
+	Messagebox("Sucsesfully created the csv file " + workingdir + "Locations.csv")
+	exit
+Else
+	Writefile(log,"There were no locations found in the output file")
+	CloseFile(fout)
+	closefile(log)
+	messagebox("There were no locations found in the output file but the template file " + workingdir + "Locations.csv was created")
+	exit
+End if
+CloseFile(fout)
+:PreFinalize
+WriteFile(Log,"Closing the input file")
+CloseFile(fin)
+
+
+:Finalize
+CloseFile(log)
+exit

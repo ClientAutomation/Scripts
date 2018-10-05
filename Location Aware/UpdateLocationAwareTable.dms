@@ -1,0 +1,274 @@
+Dim SQLHost, SQLUser, SQLPassword, polname[1000], PolicyName, OneLine, onelinetemp[6], LocParm[1000], LocName[1000], Priority[1000], IPRange[1000], SSName[1000], SubNet[1000], ScriptName[1000] WorkingDir, workingdir1 as string
+Dim Fin,Fout,Count, Log, j, k, present, found, failed, OrgCount, RC as integer
+
+
+'********************************set these to access the mdb***********************************************************
+
+SQLHost="localHost"  'or hostname\instancename
+SQLUser="ca_itrm" 'or ca_itrm
+SQLPassword="NOT_changedR11"
+
+'***********************************************************************************************************************
+
+
+Function PopulateArray1() as string
+LocParm[count]="Loc" + str(count)
+LocName[count]=mid(oneline,1,instr(oneline,",")-1)
+	oneline=mid(oneline,instr(oneline,",") +1)
+Priority[count]=mid(oneline,1,instr(oneline,",")-1)
+	oneline=mid(oneline,instr(oneline,",") +1)
+IPrange[count]=mid(oneline,1,instr(oneline,",")-1)
+	oneline=mid(oneline,instr(oneline,",") +1)
+SSName[count]=mid(oneline,1,instr(oneline,",")-1)
+	oneline=mid(oneline,instr(oneline,",") +1)
+SubNet[count]=mid(oneline,1,instr(oneline,",")-1)
+	oneline=mid(oneline,instr(oneline,",") +1)
+ScriptName[count]=mid(oneline,1,instr(oneline,",")-1)
+	oneline=mid(oneline,instr(oneline,",") +1)
+End Function
+
+
+
+Function GetPolicyNames() as integer
+dim fin1, fout1 as integer
+rc=0
+count=0
+
+workingdir1="""" + workingdir
+oneline="sqlcmd -S " + sqlHost + " -U  " + SQLUser + " -P " + SQLPassword + " -i " + workingdir1 + "Getpolname.sql"" -o " + Workingdir1 + "PolName.out""  -h -1 -I -W -d MDB"
+Writefile(log,"preparing to get the list of avalible policies with the following command")
+Writefile(log,oneline)
+rc=exec(oneline,true)
+if rc<> 0 then 
+	messagebox("Unable to get list of policies from MSSQL")
+	writefile(log, "Unable to get list of policies from MSSQL")
+	GetPolicyNames=1
+	exit function
+end if
+Writefile(log,"Preparing to open the SQL output file " + Workingdir + "PolName.out")
+fin1=OpenFile(Workingdir + "PolName.out",O_READ)
+if fin1<0 then
+	messagebox("unable to open output file " + workingdir + "polname.out")
+	writefile(log,"unable to open output file " + workingdir + "polname.out")
+	Getpolicynames=1
+	exit function
+end if
+Writefile(log,"The following configuration policies are listed in the MDB")
+While Not(Eof(fin1))
+	readfile(fin1,oneline)
+	
+	if oneline="" then 
+		oneline="Default"
+	end if
+	found=0
+	if count >0 then
+		for j=0 to count-1
+			if oneline=polname[j] then
+				found=1
+				exit for
+			end if
+		next j
+		if found=0 then 
+			polname[count]=oneline
+			writefile(log,oneline)
+			count=count+1		
+		End if
+	else
+		polname[count]=oneline
+		WriteFile(log,oneline)
+		count=count+1
+	end if
+wend
+closefile(fin1)
+count=count-1
+clearscreen()
+Writefile(log,"Preparing to write the avalible policy names to the file " + Workingdir + "PolName.txt")
+fout1=OpenFile(Workingdir + "PolName.txt",O_WRITE)
+if fout1<0 then
+	messagebox("unable to open output file " + workingdir + "polname.txt")
+	writefile(log,"unable to open output file " + workingdir + "polname.txt")
+	getpolicynames=1
+	exit function
+end if
+for j=0 to count
+	print polname[j]
+	writefile(fout1,polname[j])
+next j
+writefile(log,"closing file " + workingdir + "polname.txt")
+closefile(fout1)
+If policyname="" then
+	PolicyName="Default"
+	Writefile(log,"asking user to choose policy name of the policy to be exported")	
+	InputBox("Enter the name of the policy you want to export. The avalible names are in the file " + Workingdir + "PolName.txt","Policy Selection",PolicyName)
+End if
+:redo	
+clearscreen()
+Writefile(log,"user chose " + policyname)
+if PolicyName="" then 
+	InputBox("Enter the name of the policy you want to export. The avalible names are in the file " + Workingdir + "PolName.txt","MUST ENTER A POLICY NAME",PolicyName)
+	writefile(log,"User did not enter a value")
+	Goto Redo
+End if
+
+found=0
+for j=0 to count
+	if policyname=PolName[j] then 
+		found=1
+		exit for
+	End if
+Next j
+If found=0 then
+	Messagebox("You entered " + policyname + ".  This is an invalid policy name Please reenter")
+	Writefile(log,"User entered an invalid policy name")
+	policyname=""
+	goto redo
+End if
+GetPolicyNames=0
+End function
+
+
+
+'main
+if argv(1) <>"" then
+	policyname=argv(1)
+end if
+WorkingDir=""
+WorkingDir=EnvGetString("SDROOT") + "\..\"
+If WorkingDir="" then
+	
+	Messagebox("Unable to find the enviornmentment variable SDROOT, aborting application")
+	Exit
+End If
+
+If Not(ExistDir(workingdir + "CA_FDU")) THEN
+	CreateDirectory(workingdir+"CA_FDU")
+	If Not(ExistDir(workingdir + "CA_FDU")) THEN
+		Messagebox("Unable to create directory " + workingdir + "CA_FDU" + "Aborting Application")
+		Exit
+	End If
+		
+End IF
+WorkingDir= WorkingDir + "CA_FDU\"
+If Not(ExistDir(workingdir + "LocationAware")) THEN
+	CreateDirectory(workingdir+"LocationAware")
+	If Not(ExistDir(workingdir + "LocationAware")) THEN
+		Messagebox("Unable to create directory " + workingdir + "LocationAware" + "Aborting Application")
+		Exit
+	End If
+		
+End IF
+WorkingDir= WorkingDir + "LocationAware\"
+log=OpenFile(WorkingDir + "UpdateLocationAwareTable.log",O_Write)
+If Log <0 Then
+	Messagebox("Unable to open the log file for writing " + WorkingDir + "UpdateLocationAwareTable.log , aborting application")
+	Exit
+End If
+WriteFile(Log,"Logging Started")
+rc=getPolicyNames()
+if rc=1 then
+	goto finalize	
+End if
+
+fin=openfile(workingdir + "Locations.csv",O_Read)
+if fin<0 then
+	Writefile(log,"was unable to open the file " + workingdir + "Locations.csv unable to continue")
+	messagebox("was unable to open the file " + workingdir + "Locations.csv unable to continue")
+	GOTO Finalize
+End if
+readfile(fin,oneline)
+If oneline <> "Location Name,Priority,Address Range,Scalability Server,Subnet Scan,Script" then
+	Writefile(log,workingdir + "Locations.csv has an invalid format unable to continue")
+	messagebox("Locations.csv has an invalid format unable to continue")
+	Closefile(fin)
+	GOTO Finalize
+End if
+
+Count=0
+WriteFile(log,"Preparing to read the locations.CSV file")
+while Not(Eof(fIn))
+	Readfile(fin,oneline)
+	PopulateArray1()
+	count=count+1
+wend
+count=count-1
+Writefile(log,"Found " + str(count) + " locations in the CSV file to import")
+fout=openFile(workingdir + "ImportLocations.xml",O_write)
+if Fout<0 then
+	WriteFile(log,"Unable to create the file " + workingdir + "ImportLocaions.xml unable to continue")
+	messagebox("Unable to create the file " + workingdir + "ImportLocaions.xml unable to continue")
+	goto prefinalize
+End If
+writefile(log,"Preparing to write the header section of the XML file")
+
+writefile(fout,"<configuration>")
+Writefile(fout,"	<allusers>")
+writefile(fout,"		<paramsection name=""itrm"">")
+writefile(fout,"			<paramsection name=""agent"">")
+writefile(fout,"				<paramsection name=""solutions"">")
+writefile(fout,"					<paramsection name=""generic"">")
+writefile(fout,"						<paramsection name=""locationaware"" orgname=""LocationAware"">")
+writefile(fout,"							<paramsection name=""locations"" orgname=""Locations"">")
+writefile(fout,"									<attribute name=""type"">table</attribute>")
+writefile(fout,"									<attribute name=""table"">yes</attribute>")
+writefile(log,"preparing to write the location configurations")
+for j=0 to count-1
+	writefile(fout,"								<paramsection name=""loc" + str(j+1) + """ orgname=""Loc" + str(j+1) + """>")
+	writefile(fout,"									<parameter orgname=""Location Name"" name=""location name"" entity=""Manager"" value=""" + locname[j] + """/>")
+	writefile(fout,"									<parameter orgname=""Priority"" name=""priority"" entity=""Manager"" value=""" + Priority[j] + """/>")
+	writefile(fout,"									<parameter orgname=""Address Range"" name=""address range"" entity=""Manager"" value=""" + iprange[j] + """/>")
+	writefile(fout,"									<parameter orgname=""Scalability Server"" name=""scalability server"" entity=""Manager"" value=""" + SSname[j] + """/>")
+	writefile(fout,"									<parameter orgname=""Subnet Scan"" name=""subnet scan"" entity=""Manager"" value=""" + subnet[j] + """/>")
+	writefile(fout,"									<parameter orgname=""Script"" name=""script"" entity=""Manager"" value=""" + scriptname[j] + """/>")
+	writefile(fout,"								</paramsection>")
+next j
+if orgcount>count then
+	writefile(log,"there are more record in the original configuration as there are in the new csv file")
+	writeFile(log,"Will write useless data to fill the extra records")
+	writefile(log,"there are " + str(orgcount-count) + "more records in the configuration")
+	for j=count to orgcount-1
+		writefile(fout,"								<paramsection name=""loc" + str(j+1) + """ orgname=""Loc" + str(j+1) + """>")
+		writefile(fout,"									<parameter orgname=""Location Name"" name=""location name"" entity=""Manager"" value=""" + str(j+1) + """/>")
+		writefile(fout,"									<parameter orgname=""Priority"" name=""priority"" entity=""Manager"" value=""" + "999" + """/>")
+		writefile(fout,"									<parameter orgname=""Address Range"" name=""address range"" entity=""Manager"" value=""" + "0.0.0.0" + """/>")
+		writefile(fout,"									<parameter orgname=""Scalability Server"" name=""scalability server"" entity=""Manager"" value=""" + "." + """/>")
+		writefile(fout,"									<parameter orgname=""Subnet Scan"" name=""subnet scan"" entity=""Manager"" value=""" + "" + """/>")
+		writefile(fout,"									<parameter orgname=""Script"" name=""script"" entity=""Manager"" value=""" + "" + """/>")
+		writefile(fout,"								</paramsection>")
+	next j
+end if
+writefile(log,"writing the close parasection lines to complete the xml file") 
+Writefile(fout,"							</paramsection>")
+Writefile(fout,"						</paramsection>")
+Writefile(fout,"					</paramsection>")
+Writefile(fout,"				</paramsection>")
+Writefile(fout,"			</paramsection>")
+Writefile(fout,"		</paramsection>")
+Writefile(fout,"	</allusers>")
+Writefile(fout,"</configuration>")
+closefile(fout)
+Writefile(log,"Preparing to import the new locations into the database")
+workingdir="""" + workingdir
+if PolicyName="Default" then
+	oneline="cmd /c ccnfregdb -f " + workingdir + "importlocations.xml""" + " -o" + " >"  + workingdir + "ccnfregdb.log" + """
+else
+	oneline="cmd /c ccnfregdb -f " + workingdir + "importlocations.xml""" + " -name """ + policyname + """ -o" + " >"  + workingdir + "ccnfregdb.log" + """
+end if
+writefile(log,"Using the folowing command to update the locations")
+Writefile(log,oneline)
+RC=exec(oneline,true)
+if RC<>0 then
+	Writefile(log,"The ccnfregdb command returned an error its output can be seen in the file " + workingdir + "ccnfregdb.log")
+	Writefile(log,"more detail can be found in the file " + workingdir + "..\..\logs\ccnfclient_<some number>.log")
+	Writefile(log,"To see the actual error you may need to set logging to detail mode with the command cftrace -c set -l detail")	 
+	Messagebox("The ccnfregdb command returned an error its output can be seen in the file " + workingdir + "ccnfregdb.log")
+Else
+	Writefile(log,"Update was sucsessful")
+	messagebox("Update was sucsessful")
+end if	
+:PreFinalize
+
+
+
+
+:Finalize
+CloseFile(log)

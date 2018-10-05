@@ -1,0 +1,53 @@
+set NoCount ON;
+select 
+	--RootObj.dname as rootName
+	loc.name aS locName
+	,lab.name aS labName
+	,val.value aS valValue
+	
+
+from [mdb].[dbo].[csm_object] as RootObj
+inner join (
+	select * from [mdb].[dbo].[csm_object] obj
+	inner join [mdb].[dbo].[csm_link] lnk on obj.id=lnk.child
+	where dname = 'itrm'
+) as itrm on RootObj.id = itrm.parent
+inner join (
+	select * from [mdb].[dbo].[csm_object] obj
+	inner join [mdb].[dbo].[csm_link] lnk on obj.id=lnk.child
+	where dname = 'agent'
+) as agent on itrm.id = agent.parent
+inner join (
+	select * from [mdb].[dbo].[csm_object] obj
+	inner join [mdb].[dbo].[csm_link] lnk on obj.id=lnk.child
+	where dname = 'solutions'
+) as solutions on agent.id = solutions.parent
+inner join (
+	select * from [mdb].[dbo].[csm_object] obj
+	inner join [mdb].[dbo].[csm_link] lnk on obj.id=lnk.child
+	where dname = 'generic'
+) as generic on solutions.id = generic.parent
+inner join (
+	select * from [mdb].[dbo].[csm_object] obj
+	inner join [mdb].[dbo].[csm_link] lnk on obj.id=lnk.child
+	where dname = 'LocationAware'
+) as LocationAware on generic.id = LocationAware.parent
+inner join (
+	select * from [mdb].[dbo].[csm_object] obj
+	inner join [mdb].[dbo].[csm_link] lnk on obj.id=lnk.child
+	where dname = 'Locations'
+) as Locations on LocationAware.id = Locations.parent
+inner join (
+	select * from [mdb].[dbo].[csm_object] obj
+	inner join [mdb].[dbo].[csm_link] lnk on obj.id=lnk.child
+) as Loc on Locations.id = Loc.parent
+
+inner join (
+	select * from [mdb].[dbo].[csm_object] obj
+	inner join [mdb].[dbo].[csm_link] lnk on obj.id=lnk.child
+) as lab on Loc.id = lab.parent
+
+inner join csm_property val on lab.id = val.object and val.name='value'
+
+where RootObj.dname like '$(PolicyName)'
+order by locName,LabName

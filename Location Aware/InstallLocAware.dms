@@ -1,0 +1,85 @@
+dim workingdir, scriptdir, oneline as string
+dim counter as integer
+dim rc as boolean
+
+
+
+
+
+
+
+
+
+counter=len(argv(0))
+
+repeat
+counter=counter-1
+oneline=mid(argv(0),counter,1)
+
+until oneline="\"
+scriptdir=left(argv(0),counter)
+print "scriptdir=" + Scriptdir
+
+
+WorkingDir=""
+WorkingDir=EnvGetString("SDROOT") + "\..\"
+If WorkingDir="" then
+	
+	Messagebox("Unable to find the enviornmentment variable SDROOT, aborting application")
+	Exit
+End If
+print "set workingdir to " + workingdir
+If Not(ExistDir(workingdir + "CA_FDU")) THEN
+	CreateDirectory(workingdir+"CA_FDU")
+	If Not(ExistDir(workingdir + "CA_FDU")) THEN
+		Messagebox("Unable to create directory " + workingdir + "CA_FDU" + "Aborting Application")
+		Exit
+	End If
+print "created " + workingdir + "CA_FDU"		
+End IF
+WorkingDir= WorkingDir + "CA_FDU\"
+If Not(ExistDir(workingdir + "LocationAware")) THEN
+	CreateDirectory(workingdir+"LocationAware")
+	If Not(ExistDir(workingdir + "LocationAware")) THEN
+		Messagebox("Unable to create directory " + workingdir + "LocationAware" + "Aborting Application")
+		Exit
+	End If
+Print "created workingdir + LocationAware"		
+End IF
+WorkingDir= WorkingDir + "LocationAware\"
+print "Workingdir is now " + workingdir
+
+rc=copyfile(scriptdir + "UpdateLocationAwareTable.txt",workingdir + "UpdateLocationAwareTable.dms",true)
+if rc=true then 
+	print "copied file UpdateLocationAwareTable"
+else
+	messagebox("was unable to copy the file " + scriptdir + "UpdateLocationAwareTable.txt to " + workingdir + "UpdateLocationAwareTable.dms")
+	exit
+end if
+
+rc=copyfile(scriptdir + "GetLocationAwareTable.txt",workingdir + "GetLocationAwareTable.dms",true)
+if rc=true then 
+	print "copied file GetLocationAwareTable"
+else
+	messagebox("was unable to copy the file " + scriptdir + "GetLocationAwareTable.txt to " + workingdir + "GetLocationAwareTable.dms")
+	exit
+end if
+
+
+rc=copyfile(scriptdir + "GetPolName.txt",workingdir + "GetPolName.sql",true)
+if rc=true then 
+	print "copied file GetPolName."
+else
+	messagebox("was unable to copy the file " + scriptdir + "GetPolName.txt to " + workingdir + "GetPolName.sql")
+	exit
+end if
+
+rc=copyfile(scriptdir + "GetLocations.txt",workingdir + "GetLocations.sql",true)
+if rc=true then 
+	print "copied file GetLocations"
+else
+	messagebox("was unable to copy the file " + scriptdir + "Getlocations.txt to " + workingdir + "Getlocations.sql")
+	exit
+end if
+Messagebox("All files copied, R E M E M B E R TO ENTER THE MSSQL CREDENTIALS IN BOTH .DMS Files in the directory " + workingdir)
+exit
