@@ -8,7 +8,12 @@ REM Original Author:
 REM Brian Fontana, Principal Engineer, CA Support
 REM
 REM Last Updated:
-REM 27-Sep 2018 -- Brian Fontana
+REM 22-Oct 2018 -- Brian Fontana.
+REM Change "xcopy" to "copy", which is native to the
+REM command interpreter.
+REM
+REM 27-Sep 2018 -- Brian Fontana.
+REM Orignal version.
 REM
 REM Purpose:
 REM This script will check if the RC feature is installed on the system,
@@ -106,12 +111,12 @@ REM Copy new driver and install it.
 if %arch%==32 (
   echo From: "%~dp0RCMirrorInstall_x86.exe"
   echo   To: "%itrm_dir%DSM\bin\x86\RCMirrorInstall.exe"
-  xcopy "%~dp0RCMirrorInstall_x86.exe" "%itrm_dir%DSM\bin\x86\RCMirrorInstall.exe" /Y
+  copy "%~dp0RCMirrorInstall_x86.exe" "%itrm_dir%DSM\bin\x86\RCMirrorInstall.exe" /Y
   "%itrm_dir%DSM\bin\x86\RCMirrorInstall.exe" -install
 ) else (
   echo From: "%~dp0RCMirrorInstall.exe"
   echo   To: "%itrm_dir%DSM\bin\AMD64\RCMirrorInstall.exe"
-  xcopy "%~dp0RCMirrorInstall.exe" "%itrm_dir%DSM\bin\AMD64\RCMirrorInstall.exe" /Y
+  copy "%~dp0RCMirrorInstall.exe" "%itrm_dir%DSM\bin\AMD64\RCMirrorInstall.exe" /Y
   "%itrm_dir%DSM\bin\AMD64\RCMirrorInstall.exe" -install)
 
 REM Exit code 0 -- Successful execution.
